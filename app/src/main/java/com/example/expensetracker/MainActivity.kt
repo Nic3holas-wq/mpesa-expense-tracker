@@ -14,6 +14,7 @@ import com.example.expensetracker.ui.theme.ExpenseTrackerTheme
 import com.example.expensetracker.view.AddExpenseScreen
 import com.example.expensetracker.view.ExpenseListScreen
 import com.example.expensetracker.view.Home
+import com.example.expensetracker.view.Transactions
 import com.example.expensetracker.viewmodel.ExpenseViewModel
 import com.example.expensetracker.viewmodel.ExpenseViewModelFactory
 
@@ -41,7 +42,10 @@ class MainActivity : ComponentActivity() {
                         AddExpenseScreen(viewModel, navController)
                     }
                     composable("home"){
-                        Home()
+                        Home(navController)
+                    }
+                    composable("transactions"){
+                        Transactions(navController)
                     }
                 }
             }

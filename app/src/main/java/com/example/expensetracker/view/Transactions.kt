@@ -31,14 +31,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
-@Preview
+//@Preview
 @Composable
-fun Transactions(){
+fun Transactions(navController: NavController){
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0f, 0f, 0f, 0.4f))
+            .background(Color(0f, 0f, 0f, 0.9f))
             .padding(top = 25.dp),
     ) {
 
@@ -47,7 +48,7 @@ fun Transactions(){
         ){
 
             IconButton(
-                onClick = {}
+                onClick = {navController.navigate("Home")}
             ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
@@ -173,6 +174,8 @@ fun Transactions(){
                 )
 
                 Box(
+                    modifier = Modifier
+                        .padding(top = 15.dp),
                     contentAlignment = Alignment.Center
                 ){
                     Card(
