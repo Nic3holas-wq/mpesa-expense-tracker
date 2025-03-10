@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -23,19 +25,30 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.expensetracker.viewmodel.TransactionViewModel
 
 //@Preview
 @Composable
-fun Transactions(navController: NavController){
+fun Transactions(viewModel: TransactionViewModel, navController: NavController){
+    val transactions = viewModel.allTransactions.collectAsState(initial = emptyList()).value
+    val totalSent by viewModel.totalSent.collectAsState(initial = 0.0)
+    val displaySent = totalSent ?: 0.0
+    val totalReceived by viewModel.totalReceived.collectAsState(initial = 0.0)
+    val displayReceived = totalReceived ?: 0.0
+    val totalBalance by viewModel.totalBalance.collectAsState(initial = 0.0)
+    val displayBalance = totalBalance ?: 0.0
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -43,28 +56,7 @@ fun Transactions(navController: NavController){
             .padding(top = 25.dp),
     ) {
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ){
-
-            IconButton(
-                onClick = {navController.navigate("Home")}
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White,
-                    modifier = Modifier.size(35.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = "Transactions",
-                color = Color.White,
-                fontSize = 24.sp
-            )
-        }
-        HorizontalDivider(thickness = 0.2.dp, color = Color(1f, 1f, 1f, 0.2f))
+        TopNavigation("Transactions", navController)
 
         Column(
 
@@ -112,7 +104,7 @@ fun Transactions(navController: NavController){
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "Ksh 29,000",
+                        text = "Ksh ${displayReceived}",
                         color = Color.White,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.SemiBold
@@ -154,7 +146,7 @@ fun Transactions(navController: NavController){
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "Ksh 40,450",
+                        text = "Ksh ${displaySent}",
                         color = Color.White,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.SemiBold
@@ -173,111 +165,72 @@ fun Transactions(navController: NavController){
                     fontSize = 20.sp
                 )
 
-                Box(
-                    modifier = Modifier
-                        .padding(top = 15.dp),
-                    contentAlignment = Alignment.Center
-                ){
-                    Card(
-                        modifier = Modifier
-                            .size(width = 370.dp, height = 60.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0.28f, 0.23f, 0.23f, 0.72f)
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(5.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
+                LazyColumn {
+                    items(transactions){transaction ->
+                        val statusColor = if (transaction.type == "R") Color.Green else Color.Red
+                        Box(
+                            contentAlignment = Alignment.Center
+                        ){
+                            Card(
                                 modifier = Modifier
-                                    .size(40.dp)
-                                    .background(Color.Green, shape = CircleShape),
-                                contentAlignment = Alignment.Center
-                            ){
-                                Text(
-                                    text = "R",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                            }
-                            Column(
-                                modifier = Modifier.padding(horizontal = 7.dp)
+                                    .size(width = 370.dp, height = 120.dp)
+                                    .padding(bottom = 5.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0.28f, 0.23f, 0.23f, 0.72f)
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
                             ) {
-                                Text(
-                                    text = "Confirmed you have received...",
-                                    color = Color.White,
-                                    fontSize = 16.sp
-                                )
                                 Row(
-                                    modifier = Modifier.padding(top = 4.dp)
+                                    modifier = Modifier.padding(5.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(text = "02/03/2025", color = Color(1f,1f,1f,0.4f))
-                                    Spacer(modifier = Modifier.width(20.dp))
-                                    Text(text = "21:50", color = Color(1f,1f,1f,0.4f))
-                                }
-                            }
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(statusColor, shape = CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ){
+                                        Text(
+                                            text = transaction.type,
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                    Column(
+                                        modifier = Modifier
+                                            .padding(horizontal = 7.dp)
+                                    ) {
+                                        Text(
+                                            text = transaction.message,
+                                            color = Color.White,
+                                            maxLines = 4,
+                                            overflow = TextOverflow.Ellipsis,
+                                            fontSize = 14.sp
+                                        )
+                                        Row(
+                                        ) {
+                                            Text(text = transaction.date, fontSize = 12.sp, color = Color(1f,1f,1f,0.4f))
+                                            Spacer(modifier = Modifier.width(20.dp))
+                                            Text(text = transaction.time,fontSize = 12.sp, color = Color(1f,1f,1f,0.4f))
+                                        }
+                                    }
 
+                                }
+
+                            }
                         }
 
                     }
                 }
 
-                Box(
-                    modifier = Modifier
-                        .padding(vertical = 5.dp),
-                    contentAlignment = Alignment.Center
-                ){
-                    Card(
-                        modifier = Modifier
-                            .size(width = 370.dp, height = 60.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0.28f, 0.23f, 0.23f, 0.72f)
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(5.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .background(Color.Red, shape = CircleShape),
-                                contentAlignment = Alignment.Center
-                            ){
-                                Text(
-                                    text = "S",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                            }
-                            Column(
-                                modifier = Modifier.padding(horizontal = 7.dp)
-                            ) {
-                                Text(
-                                    text = "Confirmed you have sent...",
-                                    color = Color.White,
-                                    fontSize = 16.sp
-                                )
-                                Row(
-                                    modifier = Modifier.padding(top = 4.dp)
-                                ) {
-                                    Text(text = "04/03/2025", color = Color(1f,1f,1f,0.4f))
-                                    Spacer(modifier = Modifier.width(20.dp))
-                                    Text(text = "22:00", color = Color(1f,1f,1f,0.4f))
-                                }
-                            }
+            }
 
-                        }
 
-                    }
-                }
+
+
+
             }
 
         }
     }
-}

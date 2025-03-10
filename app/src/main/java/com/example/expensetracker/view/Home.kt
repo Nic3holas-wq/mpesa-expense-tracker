@@ -1,18 +1,23 @@
 package com.example.expensetracker.view
 
+import com.example.expensetracker.R
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
@@ -22,7 +27,6 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -33,7 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -42,22 +46,39 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.expensetracker.viewmodel.TransactionViewModel
 import kotlinx.coroutines.launch
 
 
 //@Preview
 @Composable
-fun Home( navController: NavController){
-    var savings by remember {
+fun Home(viewModel: TransactionViewModel, navController: NavController){
+    val transactions = viewModel.allTransactions.collectAsState(initial = emptyList()).value
+    val totalSent by viewModel.totalSent.collectAsState(initial = 0.0)
+    val displaySent = totalSent ?: 0.0
+    val totalReceived by viewModel.totalReceived.collectAsState(initial = 0.0)
+    val displayReceived = totalReceived ?: 0.0
+    val totalBalance by viewModel.totalBalance.collectAsState(initial = 0.0)
+    val displayBalance = totalBalance ?: 0.0
+
+    var daily by remember {
         mutableFloatStateOf(0.15f)
     }
-    var sent by remember { mutableStateOf(2000) }
-    var received by remember { mutableStateOf(10000) }
+    var weekly by remember {
+        mutableFloatStateOf(0.75f)
+    }
+    var monthly by remember {
+        mutableFloatStateOf(0.90f)
+    }
+    var yearly by remember {
+        mutableFloatStateOf(0.97f)
+    }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -145,37 +166,24 @@ fun Home( navController: NavController){
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column(
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp)
+
                 ) {
                     Text(
-                        fontSize = 20.sp,
-                        text = "Savings",
-                        color = Color.White
+                        text = "Balance",
+                        color = Color.White,
+                        fontSize = 20.sp
                     )
-                    Box(
-                        contentAlignment = Alignment.Center,
-
-                        modifier = Modifier.size(62.dp)
-                    ){
-                        CircularProgressIndicator(
-                            modifier = Modifier.width(90.dp),
-                            progress = savings,
-                            color = Color.Black,
-                            trackColor = Color.Green
-                        )
-                        Text(
-                            modifier = Modifier.padding(top = 15.dp),
-                            text = "${((1-savings) * 100).toInt()}%",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-
-                    }
-
+                    Spacer(modifier = Modifier.height(40.dp))
+                    Text(
+                        text = "Ksh${displayBalance}",
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
 
                 Column(
@@ -192,7 +200,7 @@ fun Home( navController: NavController){
                     )
                     Spacer(modifier = Modifier.height(40.dp))
                     Text(
-                        text = "Ksh${sent.toInt()}",
+                        text = "Ksh${displaySent}",
                         color = Color.Red,
                         fontSize = 20.sp
                     )
@@ -208,7 +216,7 @@ fun Home( navController: NavController){
                     )
                     Spacer(modifier = Modifier.height(40.dp))
                     Text(
-                        text = "Ksh${received.toInt()}",
+                        text = "Ksh${displayReceived}",
                         color = Color.Green,
                         fontSize = 20.sp
                     )
@@ -230,110 +238,68 @@ fun Home( navController: NavController){
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box(
-                    contentAlignment = Alignment.Center
-                ){
-                    Card(
-                        modifier = Modifier
-                            .size(width = 370.dp, height = 60.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0.28f, 0.23f, 0.23f, 0.72f)
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(5.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
+
+                LazyColumn {
+                    items(transactions.take(2)){transaction ->
+                        val statusColor = if (transaction.type == "R") Color.Green else Color.Red
+                        Box(
+                            contentAlignment = Alignment.Center
+                        ){
+                            Card(
                                 modifier = Modifier
-                                    .size(40.dp)
-                                    .background(Color.Green, shape = CircleShape),
-                                contentAlignment = Alignment.Center
-                            ){
-                                Text(
-                                    text = "R",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                            }
-                            Column(
-                                modifier = Modifier.padding(horizontal = 7.dp)
+                                    .size(width = 370.dp, height = 70.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0.28f, 0.23f, 0.23f, 0.72f)
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
                             ) {
-                                Text(
-                                    text = "Confirmed you have received...",
-                                    color = Color.White,
-                                    fontSize = 16.sp
-                                )
                                 Row(
-                                    modifier = Modifier.padding(top = 4.dp)
+                                    modifier = Modifier.padding(5.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(text = "02/03/2025", color = Color(1f,1f,1f,0.4f))
-                                    Spacer(modifier = Modifier.width(20.dp))
-                                    Text(text = "21:50", color = Color(1f,1f,1f,0.4f))
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(statusColor, shape = CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ){
+                                        Text(
+                                            text = transaction.type,
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                    Column(
+                                        modifier = Modifier
+                                            .padding(horizontal = 7.dp)
+                                    ) {
+                                        Text(
+                                            text = transaction.message,
+                                            color = Color.White,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                            fontSize = 14.sp
+                                        )
+                                        Row(
+                                        ) {
+                                            Text(text = transaction.date, fontSize = 12.sp, color = Color(1f,1f,1f,0.4f))
+                                            Spacer(modifier = Modifier.width(20.dp))
+                                            Text(text = transaction.time,fontSize = 12.sp, color = Color(1f,1f,1f,0.4f))
+                                        }
+                                    }
+
                                 }
+
                             }
-
-                        }
-
-                    }
-                }
-
-
-                Box(
-                    modifier = Modifier
-                        .padding(vertical = 5.dp),
-                    contentAlignment = Alignment.Center
-                ){
-                    Card(
-                        modifier = Modifier
-                            .size(width = 370.dp, height = 60.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0.28f, 0.23f, 0.23f, 0.72f)
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(5.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .background(Color.Red, shape = CircleShape),
-                                contentAlignment = Alignment.Center
-                            ){
-                                Text(
-                                    text = "S",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                            }
-                            Column(
-                                modifier = Modifier.padding(horizontal = 7.dp)
-                            ) {
-                                Text(
-                                    text = "Confirmed you have sent...",
-                                    color = Color.White,
-                                    fontSize = 16.sp
-                                )
-                                Row(
-                                    modifier = Modifier.padding(top = 4.dp)
-                                ) {
-                                    Text(text = "04/03/2025", color = Color(1f,1f,1f,0.4f))
-                                    Spacer(modifier = Modifier.width(20.dp))
-                                    Text(text = "22:00", color = Color(1f,1f,1f,0.4f))
-                                }
-                            }
-
                         }
 
                     }
                 }
 
             }
+
+
             Column(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -351,12 +317,13 @@ fun Home( navController: NavController){
                 HorizontalDivider(thickness = 0.3.dp, color = Color(1f, 1f, 1f, 0.5f))
 
                 Spacer(modifier = Modifier.height(10.dp))
-                Text(text = "Your Goals", color = Color.White, fontSize = 20.sp)
+                Text(text = "Your Targets", color = Color.White, fontSize = 20.sp)
 
                 Row (
                     modifier = Modifier.fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .padding(20.dp)
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(30.dp)
 
                 ){
                     Column(
@@ -370,13 +337,13 @@ fun Home( navController: NavController){
                         ){
                             CircularProgressIndicator(
                                 modifier = Modifier.width(90.dp),
-                                progress = savings,
+                                progress = daily,
                                 color = Color.Black,
                                 trackColor = Color.Green
                             )
                             Text(
                                 modifier = Modifier.padding(top = 15.dp),
-                                text = "${((1-savings) * 100).toInt()}%",
+                                text = "${((1-daily) * 100).toInt()}%",
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -387,9 +354,9 @@ fun Home( navController: NavController){
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = "Car",
+                            text = "Daily Target",
                             color = Color.White,
-                            fontSize = 20.sp
+                            fontSize = 14.sp
                         )
 
                     }
@@ -405,13 +372,13 @@ fun Home( navController: NavController){
                         ){
                             CircularProgressIndicator(
                                 modifier = Modifier.width(90.dp),
-                                progress = savings,
+                                progress = weekly,
                                 color = Color.Black,
                                 trackColor = Color.Green
                             )
                             Text(
                                 modifier = Modifier.padding(top = 15.dp),
-                                text = "${((1-savings) * 100).toInt()}%",
+                                text = "${((1-weekly) * 100).toInt()}%",
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -422,9 +389,9 @@ fun Home( navController: NavController){
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = "Computer",
+                            text = "Weekly Target",
                             color = Color.White,
-                            fontSize = 20.sp
+                            fontSize = 14.sp
                         )
 
                     }
@@ -440,13 +407,13 @@ fun Home( navController: NavController){
                         ){
                             CircularProgressIndicator(
                                 modifier = Modifier.width(90.dp),
-                                progress = savings,
+                                progress = monthly,
                                 color = Color.Black,
                                 trackColor = Color.Green
                             )
                             Text(
                                 modifier = Modifier.padding(top = 15.dp),
-                                text = "${((1-savings) * 100).toInt()}%",
+                                text = "${((1-monthly) * 100).toInt()}%",
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -455,9 +422,42 @@ fun Home( navController: NavController){
                         }
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
-                            text = "House",
+                            text = "Monthly Target",
                             color = Color.White,
-                            fontSize = 20.sp
+                            fontSize = 14.sp
+                        )
+
+                    }
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+
+                            modifier = Modifier.size(62.dp)
+                                .padding(bottom = 15.dp)
+                        ){
+                            CircularProgressIndicator(
+                                modifier = Modifier.width(90.dp),
+                                progress = yearly,
+                                color = Color.Black,
+                                trackColor = Color.Green
+                            )
+                            Text(
+                                modifier = Modifier.padding(top = 15.dp),
+                                text = "${((1-yearly) * 100).toInt()}%",
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "Yearly Target",
+                            color = Color.White,
+                            fontSize = 14.sp
                         )
 
                     }
@@ -467,18 +467,19 @@ fun Home( navController: NavController){
                 OutlinedButton(
                     onClick = {}
                 ) {
-                    Text(text = "Set new goal", color = Color.White)
+                    Text(text = "Set new target", color = Color.White)
                 }
 
                 Row(
                     modifier = Modifier
                         .padding(top = 10.dp)
+                        .horizontalScroll(rememberScrollState())
                 ) {
-
                     Card(
                         modifier = Modifier
                             .size(height = 100.dp, width = 150.dp)
-                            .padding(5.dp),
+                            .padding(5.dp)
+                            .clickable(onClick = {navController.navigate("daily_reports")}),
 
                         colors = CardDefaults.cardColors(Color(0.27f, 0.23f, 0.23f, 0.5f))
                     ) {
@@ -490,15 +491,15 @@ fun Home( navController: NavController){
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.DateRange,
-                                    contentDescription = "Weekly Goals",
+                                    painter = painterResource(id = R.drawable.baseline_today_24),
+                                    contentDescription = "Daily Reports",
                                     tint = Color.White,
                                     modifier = Modifier
                                         .size(48.dp)
 
                                 )
                                 Text(
-                                    text = "Weekly Goals",
+                                    text = "Daily Reports",
                                     color = Color.White,
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.SemiBold
@@ -512,7 +513,8 @@ fun Home( navController: NavController){
                     Card(
                         modifier = Modifier
                             .size(height = 100.dp, width = 150.dp)
-                            .padding(5.dp),
+                            .padding(5.dp)
+                            .clickable(onClick = {navController.navigate("weekly_reports")}),
 
                         colors = CardDefaults.cardColors(Color(0.27f, 0.23f, 0.23f, 0.5f))
                     ) {
@@ -525,14 +527,14 @@ fun Home( navController: NavController){
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.DateRange,
-                                    contentDescription = "Weekly Goals",
+                                    contentDescription = "Weekly reports",
                                     tint = Color.White,
                                     modifier = Modifier
                                         .size(48.dp)
 
                                 )
                                 Text(
-                                    text = "Monthly Goals",
+                                    text = "Weekly Reports",
                                     color = Color.White,
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.SemiBold
@@ -542,7 +544,84 @@ fun Home( navController: NavController){
                         }
 
                     }
+
+                    Card(
+                        modifier = Modifier
+                            .size(height = 100.dp, width = 150.dp)
+                            .padding(5.dp)
+                            .clickable(onClick = {navController.navigate("monthly_reports")}),
+
+                        colors = CardDefaults.cardColors(Color(0.27f, 0.23f, 0.23f, 0.5f))
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ){
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_calendar_month_24),
+                                    contentDescription = "Monthly Reports",
+                                    tint = Color.White,
+                                    modifier = Modifier
+                                        .size(48.dp)
+
+                                )
+                                Text(
+                                    text = "Monthly Reports",
+                                    color = Color.White,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+
+                        }
+
+                    }
+
+                    Card(
+                        modifier = Modifier
+                            .size(height = 100.dp, width = 150.dp)
+                            .padding(5.dp)
+                            .clickable(onClick = {navController.navigate("yearly_reports")}),
+
+                        colors = CardDefaults.cardColors(Color(0.27f, 0.23f, 0.23f, 0.5f))
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ){
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_view_week_24),
+                                    contentDescription = "Yearly Reports",
+                                    tint = Color.White,
+                                    modifier = Modifier
+                                        .size(48.dp)
+
+                                )
+                                Text(
+                                    text = "Yearly Reports",
+                                    color = Color.White,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+
+                        }
+
+                    }
+
+
+
+
                 }
+
+
+
             }
         }
     }

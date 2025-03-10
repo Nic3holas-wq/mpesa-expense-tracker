@@ -67,6 +67,9 @@ dependencies {
     implementation("androidx.room:room-ktx:$room_version")
     implementation("androidx.navigation:navigation-compose:2.8.2")
     implementation("androidx.compose.material3:material3:1.3.1")
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
+    implementation("androidx.startup:startup-runtime:1.2.0")
+    implementation("androidx.compose.runtime:runtime-livedata:1.7.8")
 
 
 }
